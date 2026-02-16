@@ -159,8 +159,9 @@ class MatchProvider extends ChangeNotifier {
 
       nextServerPlayer =
           _state.teamAPlayers.player1; // Simplification for singles
-      if (nextServerTeam == Team.B)
+      if (nextServerTeam == Team.B) {
         nextServerPlayer = _state.teamBPlayers.player1;
+      }
     }
 
     // Create rally event
@@ -216,8 +217,9 @@ class MatchProvider extends ChangeNotifier {
         ? _state.teamAPlayers
         : _state.teamBPlayers;
     if (positions[players.player1.name] == pos) return players.player1;
-    if (players.player2 != null && positions[players.player2!.name] == pos)
+    if (players.player2 != null && positions[players.player2!.name] == pos) {
       return players.player2!;
+    }
     return players.player1; // Fallback
   }
 

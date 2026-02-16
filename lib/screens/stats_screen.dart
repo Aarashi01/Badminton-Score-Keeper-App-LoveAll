@@ -99,8 +99,9 @@ class StatsScreen extends StatelessWidget {
     int valB, {
     bool isTotal = false,
   }) {
-    if (valA == 0 && valB == 0)
+    if (valA == 0 && valB == 0) {
       return const SizedBox.shrink(); // Hide if no stats for this reason
+    }
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 8.0),

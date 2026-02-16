@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../models/match_state.dart';
 import '../providers/match_provider.dart';
-import 'match_screen.dart';
 
 class MatchSetupScreen extends StatefulWidget {
   const MatchSetupScreen({super.key});
@@ -151,7 +151,7 @@ class _MatchSetupScreenState extends State<MatchSetupScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         border: Border.all(color: color, width: 2),
         borderRadius: BorderRadius.circular(12),
       ),
@@ -175,7 +175,7 @@ class _MatchSetupScreenState extends State<MatchSetupScreen> {
               labelStyle: const TextStyle(color: Colors.white70),
               border: const OutlineInputBorder(),
               enabledBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: color.withOpacity(0.5)),
+                borderSide: BorderSide(color: color.withValues(alpha: 0.5)),
               ),
               focusedBorder: OutlineInputBorder(
                 borderSide: BorderSide(color: color),
@@ -217,66 +217,81 @@ class _MatchSetupScreenState extends State<MatchSetupScreen> {
     Function(CourtPosition) onPositionChanged,
     Color color,
   ) {
-    return Row(
-      children: [
-        Expanded(
-          flex: 2,
-          child: TextField(
-            controller: controller,
-            style: const TextStyle(color: Colors.white),
-            decoration: InputDecoration(
-              labelText: label,
-              labelStyle: const TextStyle(color: Colors.white70),
-              border: const OutlineInputBorder(),
-              enabledBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: color.withOpacity(0.3)),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: color),
-              ),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 12,
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: DropdownButtonFormField<CourtPosition>(
-            value: position,
-            dropdownColor: Colors.grey[800],
-            style: const TextStyle(color: Colors.white),
-            decoration: InputDecoration(
-              labelText: "Side",
-              labelStyle: const TextStyle(color: Colors.white70),
-              border: const OutlineInputBorder(),
-              enabledBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: color.withOpacity(0.3)),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: color),
-              ),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 12,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Adjust layout slightly based on available width if needed
+        // Using flex factors 5:3 gives the dropdown more relative space (37.5%)
+        // compared to the previous 2:1 (33%), preventing the overflow.
+        return Row(
+          children: [
+            Expanded(
+              flex: 5,
+              child: TextField(
+                controller: controller,
+                style: const TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  labelText: label,
+                  labelStyle: const TextStyle(color: Colors.white70),
+                  border: const OutlineInputBorder(),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: color.withValues(alpha: 0.3)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: color),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 12,
+                  ),
+                  isDense: true,
+                ),
               ),
             ),
-            items: const [
-              DropdownMenuItem(value: CourtPosition.left, child: Text("Left")),
-              DropdownMenuItem(
-                value: CourtPosition.right,
-                child: Text("Right"),
+            const SizedBox(width: 8),
+            Expanded(
+              flex: 3,
+              child: DropdownButtonFormField<CourtPosition>(
+                // ignore: deprecated_member_use
+                value: position,
+                dropdownColor: Colors.grey[800],
+                style: const TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  labelText: "Side",
+                  labelStyle: const TextStyle(color: Colors.white70),
+                  border: const OutlineInputBorder(),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: color.withValues(alpha: 0.3)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: color),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 12,
+                  ),
+                  isDense: true,
+                ),
+                items: const [
+                  DropdownMenuItem(
+                    value: CourtPosition.left,
+                    child: Text("Left"),
+                  ),
+                  DropdownMenuItem(
+                    value: CourtPosition.right,
+                    child: Text("Right"),
+                  ),
+                ],
+                onChanged: (value) {
+                  if (value != null) {
+                    onPositionChanged(value);
+                  }
+                },
+                isExpanded: true,
               ),
-            ],
-            onChanged: (value) {
-              if (value != null) {
-                onPositionChanged(value);
-              }
-            },
-          ),
-        ),
-      ],
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -333,9 +348,6 @@ class _MatchSetupScreenState extends State<MatchSetupScreen> {
     );
 
     // Navigate to match screen
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const MatchScreen()),
-    );
+    context.go('/match');
   }
 }
