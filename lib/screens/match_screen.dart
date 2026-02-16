@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../models/match_state.dart';
 import '../providers/match_provider.dart';
-
-import 'stats_screen.dart';
 
 class MatchScreen extends StatelessWidget {
   const MatchScreen({super.key});
@@ -25,10 +24,7 @@ class MatchScreen extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.bar_chart),
             onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const StatsScreen()),
-              );
+              context.push('/match/stats');
             },
           ),
           IconButton(
@@ -275,10 +271,7 @@ class MatchScreen extends StatelessWidget {
           const SizedBox(height: 48),
           ElevatedButton.icon(
             onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const StatsScreen()),
-              );
+              context.push('/match/stats');
             },
             icon: const Icon(Icons.bar_chart),
             label: const Text("View Stats"),
@@ -290,7 +283,7 @@ class MatchScreen extends StatelessWidget {
           OutlinedButton.icon(
             onPressed: () {
               matchProvider.resetMatch();
-              Navigator.pop(context); // Return to setup screen
+              context.go('/'); // Return to setup screen (root)
             },
             icon: const Icon(Icons.refresh),
             label: const Text("New Match"),
@@ -320,8 +313,7 @@ class MatchScreen extends StatelessWidget {
           TextButton(
             onPressed: () {
               matchProvider.resetMatch();
-              Navigator.pop(context); // Close dialog
-              Navigator.pop(context); // Return to setup screen
+              context.go('/'); // Return to setup screen
             },
             child: const Text("Reset", style: TextStyle(color: Colors.red)),
           ),

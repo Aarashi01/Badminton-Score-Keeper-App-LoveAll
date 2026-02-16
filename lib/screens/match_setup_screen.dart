@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../models/match_state.dart';
 import '../providers/match_provider.dart';
-import 'match_screen.dart';
 
 class MatchSetupScreen extends StatefulWidget {
   const MatchSetupScreen({super.key});
@@ -151,7 +151,7 @@ class _MatchSetupScreenState extends State<MatchSetupScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         border: Border.all(color: color, width: 2),
         borderRadius: BorderRadius.circular(12),
       ),
@@ -175,7 +175,7 @@ class _MatchSetupScreenState extends State<MatchSetupScreen> {
               labelStyle: const TextStyle(color: Colors.white70),
               border: const OutlineInputBorder(),
               enabledBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: color.withOpacity(0.5)),
+                borderSide: BorderSide(color: color.withValues(alpha: 0.5)),
               ),
               focusedBorder: OutlineInputBorder(
                 borderSide: BorderSide(color: color),
@@ -234,7 +234,7 @@ class _MatchSetupScreenState extends State<MatchSetupScreen> {
                   labelStyle: const TextStyle(color: Colors.white70),
                   border: const OutlineInputBorder(),
                   enabledBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: color.withOpacity(0.3)),
+                    borderSide: BorderSide(color: color.withValues(alpha: 0.3)),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderSide: BorderSide(color: color),
@@ -251,6 +251,7 @@ class _MatchSetupScreenState extends State<MatchSetupScreen> {
             Expanded(
               flex: 3,
               child: DropdownButtonFormField<CourtPosition>(
+                // ignore: deprecated_member_use
                 value: position,
                 dropdownColor: Colors.grey[800],
                 style: const TextStyle(color: Colors.white),
@@ -259,7 +260,7 @@ class _MatchSetupScreenState extends State<MatchSetupScreen> {
                   labelStyle: const TextStyle(color: Colors.white70),
                   border: const OutlineInputBorder(),
                   enabledBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: color.withOpacity(0.3)),
+                    borderSide: BorderSide(color: color.withValues(alpha: 0.3)),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderSide: BorderSide(color: color),
@@ -347,9 +348,6 @@ class _MatchSetupScreenState extends State<MatchSetupScreen> {
     );
 
     // Navigate to match screen
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const MatchScreen()),
-    );
+    context.go('/match');
   }
 }

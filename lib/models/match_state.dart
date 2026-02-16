@@ -90,8 +90,8 @@ class RallyEvent {
     required this.gameNumber,
     DateTime? timestamp,
     String? id,
-  }) : this.timestamp = timestamp ?? DateTime.now(),
-       this.id = id ?? const Uuid().v4();
+  }) : timestamp = timestamp ?? DateTime.now(),
+       id = id ?? const Uuid().v4();
 }
 
 class GameState {
@@ -107,7 +107,7 @@ class GameState {
     this.scoreB = 0,
     this.winner,
     List<RallyEvent>? rallyHistory,
-  }) : this.rallyHistory = rallyHistory ?? [];
+  }) : rallyHistory = rallyHistory ?? [];
 
   GameState copyWith({
     int? scoreA,
@@ -116,7 +116,7 @@ class GameState {
     List<RallyEvent>? rallyHistory,
   }) {
     return GameState(
-      gameNumber: this.gameNumber,
+      gameNumber: gameNumber,
       scoreA: scoreA ?? this.scoreA,
       scoreB: scoreB ?? this.scoreB,
       winner: winner ?? this.winner,
@@ -156,7 +156,7 @@ class MatchState {
     this.currentServerPlayer,
     this.currentReceiverPlayer,
     Map<String, CourtPosition>? playerPositions,
-  }) : this.teamAPlayers =
+  }) : teamAPlayers =
            teamAPlayers ??
            TeamPlayers(
              player1: Player(
@@ -164,7 +164,7 @@ class MatchState {
                startingPosition: CourtPosition.right,
              ),
            ),
-       this.teamBPlayers =
+       teamBPlayers =
            teamBPlayers ??
            TeamPlayers(
              player1: Player(
@@ -172,7 +172,7 @@ class MatchState {
                startingPosition: CourtPosition.right,
              ),
            ),
-       this.playerPositions = playerPositions ?? {};
+       playerPositions = playerPositions ?? {};
 
   GameState get currentGame => games[currentGameIndex];
 

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'providers/match_provider.dart';
-import 'screens/match_setup_screen.dart';
+import 'router/app_router.dart';
 
 void main() {
   runApp(const BadmintonScoreApp());
@@ -14,7 +14,7 @@ class BadmintonScoreApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (_) => MatchProvider(),
-      child: MaterialApp(
+      child: MaterialApp.router(
         title: 'Badminton Score Keeper',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
@@ -24,7 +24,7 @@ class BadmintonScoreApp extends StatelessWidget {
           ),
           useMaterial3: true,
         ),
-        home: const MatchSetupScreen(),
+        routerConfig: appRouter,
       ),
     );
   }
