@@ -13,6 +13,7 @@ class MatchSetupScreen extends StatefulWidget {
 
 class _MatchSetupScreenState extends State<MatchSetupScreen> {
   MatchType _matchType = MatchType.singles;
+  MatchFormat _matchFormat = MatchFormat.bestOf3;
 
   // Team names
   final _teamAController = TextEditingController(text: "Team A");
@@ -82,6 +83,42 @@ class _MatchSetupScreenState extends State<MatchSetupScreen> {
               onSelectionChanged: (Set<MatchType> newSelection) {
                 setState(() {
                   _matchType = newSelection.first;
+                });
+              },
+            ),
+            const SizedBox(height: 24),
+
+            const Text(
+              "Match Format",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 12),
+            SegmentedButton<MatchFormat>(
+              segments: const [
+                ButtonSegment(
+                  value: MatchFormat.single,
+                  label: Text("Single"),
+                  icon: Icon(Icons.looks_one),
+                ),
+                ButtonSegment(
+                  value: MatchFormat.bestOf3,
+                  label: Text("Best of 3"),
+                  icon: Icon(Icons.filter_3),
+                ),
+                ButtonSegment(
+                  value: MatchFormat.bestOf5,
+                  label: Text("Best of 5"),
+                  icon: Icon(Icons.filter_5),
+                ),
+              ],
+              selected: {_matchFormat},
+              onSelectionChanged: (Set<MatchFormat> newSelection) {
+                setState(() {
+                  _matchFormat = newSelection.first;
                 });
               },
             ),
@@ -343,6 +380,7 @@ class _MatchSetupScreenState extends State<MatchSetupScreen> {
       teamAName: _teamAController.text.trim(),
       teamBName: _teamBController.text.trim(),
       matchType: _matchType,
+      matchFormat: _matchFormat,
       teamAPlayers: teamAPlayers,
       teamBPlayers: teamBPlayers,
     );

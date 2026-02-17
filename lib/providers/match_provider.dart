@@ -21,6 +21,7 @@ class MatchProvider extends ChangeNotifier {
     required String teamAName,
     required String teamBName,
     required MatchType matchType,
+    required MatchFormat matchFormat,
     required TeamPlayers teamAPlayers,
     required TeamPlayers teamBPlayers,
   }) {
@@ -65,6 +66,7 @@ class MatchProvider extends ChangeNotifier {
       teamAName: teamAName,
       teamBName: teamBName,
       matchType: matchType,
+      matchFormat: matchFormat,
       teamAPlayers: teamAPlayers,
       teamBPlayers: teamBPlayers,
       games: [GameState(gameNumber: 1)],
@@ -273,9 +275,10 @@ class MatchProvider extends ChangeNotifier {
   }
 
   void _checkMatchWin(int wonA, int wonB) {
-    if (wonA == 2) {
+    final gamesToWin = _state.matchFormat.gamesToWin;
+    if (wonA >= gamesToWin) {
       _state = _state.copyWith(matchWinner: Team.A);
-    } else if (wonB == 2) {
+    } else if (wonB >= gamesToWin) {
       _state = _state.copyWith(matchWinner: Team.B);
     }
   }

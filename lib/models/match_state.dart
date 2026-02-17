@@ -44,6 +44,21 @@ extension WinReasonDisplay on WinReason {
 
 enum MatchType { singles, doubles }
 
+enum MatchFormat { single, bestOf3, bestOf5 }
+
+extension MatchFormatRules on MatchFormat {
+  int get gamesToWin {
+    switch (this) {
+      case MatchFormat.single:
+        return 1;
+      case MatchFormat.bestOf3:
+        return 2;
+      case MatchFormat.bestOf5:
+        return 3;
+    }
+  }
+}
+
 enum CourtPosition { left, right }
 
 class Player {
@@ -129,6 +144,7 @@ class MatchState {
   final String teamAName;
   final String teamBName;
   final MatchType matchType;
+  final MatchFormat matchFormat;
   final TeamPlayers teamAPlayers;
   final TeamPlayers teamBPlayers;
   final int gamesWonA;
@@ -145,6 +161,7 @@ class MatchState {
     this.teamAName = "Team A",
     this.teamBName = "Team B",
     this.matchType = MatchType.singles,
+    this.matchFormat = MatchFormat.bestOf3,
     TeamPlayers? teamAPlayers,
     TeamPlayers? teamBPlayers,
     this.gamesWonA = 0,
@@ -180,6 +197,7 @@ class MatchState {
     String? teamAName,
     String? teamBName,
     MatchType? matchType,
+    MatchFormat? matchFormat,
     TeamPlayers? teamAPlayers,
     TeamPlayers? teamBPlayers,
     int? gamesWonA,
@@ -196,6 +214,7 @@ class MatchState {
       teamAName: teamAName ?? this.teamAName,
       teamBName: teamBName ?? this.teamBName,
       matchType: matchType ?? this.matchType,
+      matchFormat: matchFormat ?? this.matchFormat,
       teamAPlayers: teamAPlayers ?? this.teamAPlayers,
       teamBPlayers: teamBPlayers ?? this.teamBPlayers,
       gamesWonA: gamesWonA ?? this.gamesWonA,

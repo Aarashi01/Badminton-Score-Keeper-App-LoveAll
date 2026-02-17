@@ -12,6 +12,7 @@ void main() {
         teamAName: "Team A",
         teamBName: "Team B",
         matchType: MatchType.doubles,
+        matchFormat: MatchFormat.bestOf3,
         teamAPlayers: TeamPlayers(
           player1: Player(name: "A1", startingPosition: CourtPosition.right),
           player2: Player(name: "A2", startingPosition: CourtPosition.left),
@@ -78,5 +79,66 @@ void main() {
         expect(state.playerPositions["B2"], CourtPosition.left);
       },
     );
+  });
+
+  group('MatchProvider Match Format', () {
+    late MatchProvider provider;
+
+    setUp(() {
+      provider = MatchProvider();
+    });
+
+    test('Single match ends after first game win', () {
+      provider.initializeMatch(
+        teamAName: "Team A",
+        teamBName: "Team B",
+        matchType: MatchType.singles,
+        matchFormat: MatchFormat.single,
+        teamAPlayers: TeamPlayers(
+          player1: Player(name: "A1", startingPosition: CourtPosition.right),
+        ),
+        teamBPlayers: TeamPlayers(
+          player1: Player(name: "B1", startingPosition: CourtPosition.right),
+        ),
+      );
+
+      for (int i = 0; i < 21; i++) {
+        provider.scorePoint(Team.A);
+      }
+
+      final state = provider.state;
+      expect(state.matchWinner, Team.A);
+      expect(state.gamesWonA, 1);
+      expect(state.games.length, 1);
+    });
+
+    test('Best of 5 requires 3 game wins', () {
+      provider.initializeMatch(
+        teamAName: "Team A",
+        teamBName: "Team B",
+        matchType: MatchType.singles,
+        matchFormat: MatchFormat.bestOf5,
+        teamAPlayers: TeamPlayers(
+          player1: Player(name: "A1", startingPosition: CourtPosition.right),
+        ),
+        teamBPlayers: TeamPlayers(
+          player1: Player(name: "B1", startingPosition: CourtPosition.right),
+        ),
+      );
+
+      for (int i = 0; i < 42; i++) {
+        provider.scorePoint(Team.A);
+      }
+      expect(provider.state.matchWinner, isNull);
+      expect(provider.state.gamesWonA, 2);
+
+      for (int i = 0; i < 21; i++) {
+        provider.scorePoint(Team.A);
+      }
+
+      final state = provider.state;
+      expect(state.matchWinner, Team.A);
+      expect(state.gamesWonA, 3);
+    });
   });
 }
