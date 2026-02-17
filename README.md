@@ -1,6 +1,7 @@
-# first_basic_flutter_app
+# Badminton Score Keeper App --- LoveAll(In Development)
 
-A new Flutter project.
+This app Helps to keep a real time track of an ongoing Badminton Match by incrementing the Scores of each team when they score a point.
+Going forward there will be more features added.
 
 ## Getting Started
 
