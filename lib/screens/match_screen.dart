@@ -13,225 +13,424 @@ class MatchScreen extends StatelessWidget {
     final matchProvider = context.watch<MatchProvider>();
     final matchState = matchProvider.state;
     final currentGame = matchState.currentGame;
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final pageBg = dark ? const Color(0xFF131F16) : const Color(0xFFF6F8F6);
+    final headerBg = dark ? const Color(0xFF0F172A) : Colors.white;
+    final footerBg = dark ? const Color(0xFF0F172A) : Colors.white;
+    final border = dark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0);
 
     return Scaffold(
-      backgroundColor: Colors.grey[900],
-      appBar: AppBar(
-        title: const Text("Badminton Score Keeper"),
-        backgroundColor: Colors.blueGrey[900],
-        foregroundColor: Colors.white,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.bar_chart),
-            onPressed: () {
-              context.push('/match/stats');
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.undo),
-            onPressed: matchProvider.undo,
-          ),
-          PopupMenuButton<String>(
-            onSelected: (value) {
-              if (value == 'reset') {
-                _showResetDialog(context, matchProvider);
-              }
-            },
-            itemBuilder: (context) => [
-              const PopupMenuItem(value: 'reset', child: Text('Reset Match')),
-            ],
-          ),
-        ],
-      ),
+      backgroundColor: pageBg,
       body: matchState.matchWinner != null
           ? _buildMatchWinnerView(context, matchState, matchProvider)
-          : _buildMatchView(context, matchState, matchProvider, currentGame),
+          : SafeArea(
+              child: Column(
+                children: [
+                  Container(
+                    color: headerBg,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.undo),
+                              onPressed: matchProvider.undo,
+                            ),
+                            Expanded(
+                              child: Column(
+                                children: [
+                                  Text(
+                                    'Game ${currentGame.gameNumber}',
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w700,
+                                      color: dark
+                                          ? const Color(0xFFF8FAFC)
+                                          : const Color(0xFF0F172A),
+                                    ),
+                                  ),
+                                  Text(
+                                    _formatLabel(
+                                      matchState.matchFormat,
+                                    ).toUpperCase(),
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      letterSpacing: 0.8,
+                                      fontWeight: FontWeight.w700,
+                                      color: dark
+                                          ? const Color(0xFF94A3B8)
+                                          : const Color(0xFF64748B),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.bar_chart),
+                              onPressed: () => context.push('/match/stats'),
+                            ),
+                          ],
+                        ),
+                        Divider(height: 1, color: border),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: _buildMatchView(context, matchState, currentGame),
+                  ),
+                  Container(
+                    color: footerBg,
+                    padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+                    child: Column(
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _scoreButton(
+                                title: '+1 Point',
+                                subtitle: matchState.teamAName,
+                                color: const Color(0xFF29A847),
+                                onPressed: currentGame.winner == null
+                                    ? () {
+                                        HapticFeedback.mediumImpact();
+                                        matchProvider.scorePoint(Team.A);
+                                      }
+                                    : null,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _scoreButton(
+                                title: '+1 Point',
+                                subtitle: matchState.teamBName,
+                                color: const Color(0xFF2563EB),
+                                onPressed: currentGame.winner == null
+                                    ? () {
+                                        HapticFeedback.mediumImpact();
+                                        matchProvider.scorePoint(Team.B);
+                                      }
+                                    : null,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        _utilityBar(
+                          context: context,
+                          dark: dark,
+                          onMatchSettingsTap: () =>
+                              _showResetDialog(context, matchProvider),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    color: footerBg,
+                    padding: const EdgeInsets.fromLTRB(16, 10, 16, 18),
+                    child: Row(
+                      children: [
+                        _navItem(
+                          icon: Icons.sports_score,
+                          label: 'Scoring',
+                          active: true,
+                          color: const Color(0xFF29A847),
+                        ),
+                        _navItem(
+                          icon: Icons.history,
+                          label: 'Matches',
+                          active: false,
+                        ),
+                        _navItem(
+                          icon: Icons.military_tech,
+                          label: 'League',
+                          active: false,
+                        ),
+                        _navItem(
+                          icon: Icons.person,
+                          label: 'Profile',
+                          active: false,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
     );
   }
 
   Widget _buildMatchView(
     BuildContext context,
     MatchState matchState,
-    MatchProvider matchProvider,
     GameState currentGame,
   ) {
-    return Column(
-      children: [
-        // Match Score (Games Won)
-        Container(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          color: Colors.blueGrey[800],
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              Text(
-                "Games: ${matchState.gamesWonA} - ${matchState.gamesWonB}",
-                style: const TextStyle(color: Colors.white70, fontSize: 16),
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          Expanded(
+            child: Column(
+              children: [
+                Expanded(
+                  child: _teamCard(
+                    team: Team.A,
+                    teamName: matchState.teamAName,
+                    players: matchState.teamAPlayers,
+                    score: currentGame.scoreA,
+                    isServing: matchState.currentServer == Team.A,
+                    servingPlayerName: matchState.currentServerPlayer?.name,
+                    matchType: matchState.matchType,
+                    positions: matchState.playerPositions,
+                    accent: const Color(0xFF29A847),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Expanded(
+                  child: _teamCard(
+                    team: Team.B,
+                    teamName: matchState.teamBName,
+                    players: matchState.teamBPlayers,
+                    score: currentGame.scoreB,
+                    isServing: matchState.currentServer == Team.B,
+                    servingPlayerName: matchState.currentServerPlayer?.name,
+                    matchType: matchState.matchType,
+                    positions: matchState.playerPositions,
+                    accent: const Color(0xFF2563EB),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _teamCard({
+    required Team team,
+    required String teamName,
+    required TeamPlayers players,
+    required int score,
+    required bool isServing,
+    required String? servingPlayerName,
+    required MatchType matchType,
+    required Map<String, CourtPosition> positions,
+    required Color accent,
+  }) {
+    final scoreProgress = (score / 30).clamp(0.0, 1.0);
+
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: accent.withValues(alpha: 0.30), width: 2),
+        color: accent.withValues(alpha: 0.12),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        teamName.toUpperCase(),
+                        style: TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 22,
+                          color: accent,
+                          height: 1.05,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        _playersLabel(players),
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: Color(0xFF475569),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (isServing)
+                  Icon(
+                    Icons.sports_tennis,
+                    size: 28,
+                    color: accent.withValues(alpha: 0.95),
+                  ),
+              ],
+            ),
+            const Spacer(),
+            Center(
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 180),
+                child: Text(
+                  score.toString(),
+                  key: ValueKey('$team-$score'),
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 96,
+                    color: accent,
+                    height: 0.9,
+                    letterSpacing: -2,
+                  ),
+                ),
               ),
+            ),
+            const Spacer(),
+            LinearProgressIndicator(
+              value: scoreProgress,
+              minHeight: 8,
+              borderRadius: BorderRadius.circular(8),
+              valueColor: AlwaysStoppedAnimation<Color>(accent),
+              backgroundColor: accent.withValues(alpha: 0.2),
+            ),
+            if (matchType == MatchType.doubles) ...[
+              const SizedBox(height: 8),
               Text(
-                "Game ${currentGame.gameNumber}",
+                _doublesStatus(players, positions, servingPlayerName),
                 style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF334155),
                 ),
               ),
             ],
-          ),
+          ],
         ),
+      ),
+    );
+  }
 
-        // Team Names & Scores
-        Expanded(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _buildTeamScore(
-                context,
-                Team.A,
-                matchState.teamAName,
-                currentGame.scoreA,
-                matchState,
-              ),
-              const SizedBox(height: 40),
-              const Text(
-                "VS",
-                style: TextStyle(
-                  color: Colors.white54,
-                  fontSize: 24,
-                  fontWeight: FontWeight.w300,
-                ),
-              ),
-              const SizedBox(height: 40),
-              _buildTeamScore(
-                context,
-                Team.B,
-                matchState.teamBName,
-                currentGame.scoreB,
-                matchState,
-              ),
-            ],
+  Widget _scoreButton({
+    required String title,
+    required String subtitle,
+    required Color color,
+    required VoidCallback? onPressed,
+  }) {
+    return FilledButton(
+      onPressed: onPressed,
+      style: FilledButton.styleFrom(
+        backgroundColor: color,
+        foregroundColor: Colors.white,
+        disabledBackgroundColor: color.withValues(alpha: 0.35),
+        padding: const EdgeInsets.symmetric(vertical: 20),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w700),
           ),
-        ),
+          const SizedBox(height: 2),
+          Text(
+            subtitle,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+          ),
+        ],
+      ),
+    );
+  }
 
-        // Score Buttons
-        Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Row(
-            children: [
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: currentGame.winner == null
-                      ? () {
-                          HapticFeedback.mediumImpact();
-                          matchProvider.scorePoint(Team.A);
-                        }
-                      : null,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green[700],
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 20),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: Text(
-                    "${matchState.teamAName} Scores",
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: currentGame.winner == null
-                      ? () {
-                          HapticFeedback.mediumImpact();
-                          matchProvider.scorePoint(Team.B);
-                        }
-                      : null,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue[700],
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 20),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: Text(
-                    "${matchState.teamBName} Scores",
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-            ],
+  Widget _utilityBar({
+    required BuildContext context,
+    required bool dark,
+    required VoidCallback onMatchSettingsTap,
+  }) {
+    final now = TimeOfDay.now();
+    final hh = now.hour.toString().padLeft(2, '0');
+    final mm = now.minute.toString().padLeft(2, '0');
+    final textColor = dark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
+
+    return Row(
+      children: [
+        _utilityIcon(
+          icon: Icons.timer_outlined,
+          label: '$hh:$mm',
+          color: textColor,
+        ),
+        const SizedBox(width: 20),
+        _utilityIcon(icon: Icons.swap_horiz, label: 'Switch', color: textColor),
+        const Spacer(),
+        OutlinedButton.icon(
+          onPressed: onMatchSettingsTap,
+          icon: const Icon(Icons.settings, size: 16),
+          label: const Text('Match Settings'),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: dark ? Colors.white : const Color(0xFF0F172A),
+            side: BorderSide(
+              color: dark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildTeamScore(
-    BuildContext context,
-    Team team,
-    String teamName,
-    int score,
-    MatchState state,
-  ) {
-    final TeamPlayers players = (team == Team.A)
-        ? state.teamAPlayers
-        : state.teamBPlayers;
-
+  Widget _utilityIcon({
+    required IconData icon,
+    required String label,
+    required Color color,
+  }) {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            GestureDetector(
-              onTap: () => _showEditTeamNameDialog(context, teamName),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    teamName,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  const Icon(Icons.edit, size: 16, color: Colors.white54),
-                ],
-              ),
-            ),
-          ],
-        ),
-        // Player Names Display
-        if (state.matchType == MatchType.doubles ||
-            players.player1.name.isNotEmpty) ...[
-          const SizedBox(height: 8),
-          _buildPlayerInfo(players.player1, state),
-          if (players.player2 != null) ...[
-            const SizedBox(height: 4),
-            _buildPlayerInfo(players.player2!, state),
-          ],
-        ],
-        const SizedBox(height: 12),
+        Icon(icon, size: 20, color: color),
+        const SizedBox(height: 1),
         Text(
-          score.toString(),
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 72,
-            fontWeight: FontWeight.bold,
+          label.toUpperCase(),
+          style: TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.4,
+            color: color,
           ),
         ),
       ],
+    );
+  }
+
+  Widget _navItem({
+    required IconData icon,
+    required String label,
+    required bool active,
+    Color color = const Color(0xFF94A3B8),
+  }) {
+    return Expanded(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 28, color: active ? color : const Color(0xFF94A3B8)),
+          const SizedBox(height: 2),
+          Text(
+            label.toUpperCase(),
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.5,
+              color: active ? color : const Color(0xFF94A3B8),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -245,54 +444,65 @@ class MatchScreen extends StatelessWidget {
         : matchState.teamBName;
 
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.emoji_events, size: 100, color: Colors.amber),
-          const SizedBox(height: 24),
-          const Text(
-            "Match Winner!",
-            style: TextStyle(color: Colors.white70, fontSize: 24),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Container(
+          width: double.infinity,
+          constraints: const BoxConstraints(maxWidth: 460),
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
           ),
-          const SizedBox(height: 12),
-          Text(
-            winnerName,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 48,
-              fontWeight: FontWeight.bold,
-            ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.emoji_events,
+                size: 64,
+                color: Color(0xFFF59E0B),
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                'Match Winner',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                winnerName,
+                style: const TextStyle(
+                  fontSize: 30,
+                  fontWeight: FontWeight.w800,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Games ${matchState.gamesWonA}-${matchState.gamesWonB}',
+                style: const TextStyle(
+                  color: Color(0xFF64748B),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 16),
+              FilledButton.icon(
+                onPressed: () => context.push('/match/stats'),
+                icon: const Icon(Icons.bar_chart),
+                label: const Text('View Stats'),
+              ),
+              const SizedBox(height: 8),
+              OutlinedButton.icon(
+                onPressed: () {
+                  matchProvider.resetMatch();
+                  context.go('/');
+                },
+                icon: const Icon(Icons.refresh),
+                label: const Text('New Match'),
+              ),
+            ],
           ),
-          const SizedBox(height: 12),
-          Text(
-            "Games: ${matchState.gamesWonA} - ${matchState.gamesWonB}",
-            style: const TextStyle(color: Colors.white70, fontSize: 20),
-          ),
-          const SizedBox(height: 48),
-          ElevatedButton.icon(
-            onPressed: () {
-              context.push('/match/stats');
-            },
-            icon: const Icon(Icons.bar_chart),
-            label: const Text("View Stats"),
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-            ),
-          ),
-          const SizedBox(height: 16),
-          OutlinedButton.icon(
-            onPressed: () {
-              matchProvider.resetMatch();
-              context.go('/'); // Return to setup screen (root)
-            },
-            icon: const Icon(Icons.refresh),
-            label: const Text("New Match"),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -301,113 +511,61 @@ class MatchScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text("Reset Match"),
-        content: const Text(
-          "Are you sure you want to reset the match? All progress will be lost and you'll return to match setup.",
-        ),
+        title: const Text('Match Settings'),
+        content: const Text('Reset the current match and return to setup?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text("Cancel"),
+            child: const Text('Cancel'),
           ),
           TextButton(
             onPressed: () {
               matchProvider.resetMatch();
-              context.go('/'); // Return to setup screen
+              context.go('/');
             },
-            child: const Text("Reset", style: TextStyle(color: Colors.red)),
+            child: const Text('Reset'),
           ),
         ],
       ),
     );
   }
 
-  void _showEditTeamNameDialog(BuildContext context, String currentName) {
-    final matchProvider = context.read<MatchProvider>();
-    final matchState = matchProvider.state;
-    final isTeamA = currentName == matchState.teamAName;
-    final controller = TextEditingController(text: currentName);
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text("Edit ${isTeamA ? 'Team A' : 'Team B'} Name"),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          decoration: const InputDecoration(
-            labelText: "Team Name",
-            border: OutlineInputBorder(),
-          ),
-          onSubmitted: (value) {
-            if (value.trim().isNotEmpty) {
-              if (isTeamA) {
-                matchProvider.setTeamNames(value.trim(), matchState.teamBName);
-              } else {
-                matchProvider.setTeamNames(matchState.teamAName, value.trim());
-              }
-              Navigator.pop(context);
-            }
-          },
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Cancel"),
-          ),
-          TextButton(
-            onPressed: () {
-              final newName = controller.text.trim();
-              if (newName.isNotEmpty) {
-                if (isTeamA) {
-                  matchProvider.setTeamNames(newName, matchState.teamBName);
-                } else {
-                  matchProvider.setTeamNames(matchState.teamAName, newName);
-                }
-                Navigator.pop(context);
-              }
-            },
-            child: const Text("Save"),
-          ),
-        ],
-      ),
-    );
+  String _playersLabel(TeamPlayers players) {
+    if (players.player2 == null) {
+      return players.player1.name;
+    }
+    return '${players.player1.name} / ${players.player2!.name}';
   }
 
-  Widget _buildPlayerInfo(Player player, MatchState state) {
-    bool isServer = state.currentServerPlayer?.name == player.name;
-    CourtPosition? pos = state.playerPositions[player.name];
+  String _doublesStatus(
+    TeamPlayers players,
+    Map<String, CourtPosition> positions,
+    String? servingPlayerName,
+  ) {
+    final p1Pos = positions[players.player1.name];
+    final p2Pos = players.player2 == null
+        ? null
+        : positions[players.player2!.name];
+    final serverText = servingPlayerName == null
+        ? ''
+        : ' | Server: $servingPlayerName';
+    final p1Text = p1Pos == null
+        ? '-'
+        : (p1Pos == CourtPosition.right ? 'R' : 'L');
+    final p2Text = p2Pos == null
+        ? '-'
+        : (p2Pos == CourtPosition.right ? 'R' : 'L');
+    return '${players.player1.name}($p1Text), ${players.player2?.name ?? ''}($p2Text)$serverText';
+  }
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        if (isServer) ...[
-          const Icon(Icons.sports_tennis, size: 14, color: Colors.amber),
-          const SizedBox(width: 4),
-        ],
-        Text(
-          player.name,
-          style: TextStyle(
-            color: isServer ? Colors.amber : Colors.white70,
-            fontSize: 16,
-            fontWeight: isServer ? FontWeight.bold : FontWeight.normal,
-          ),
-        ),
-        if (pos != null && state.matchType == MatchType.doubles) ...[
-          const SizedBox(width: 4),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-            decoration: BoxDecoration(
-              color: Colors.white24,
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: Text(
-              pos == CourtPosition.right ? "R" : "L",
-              style: const TextStyle(fontSize: 10, color: Colors.white),
-            ),
-          ),
-        ],
-      ],
-    );
+  String _formatLabel(MatchFormat format) {
+    switch (format) {
+      case MatchFormat.single:
+        return '1 Set';
+      case MatchFormat.bestOf3:
+        return 'Best of 3';
+      case MatchFormat.bestOf5:
+        return 'Best of 5';
+    }
   }
 }

@@ -15,21 +15,26 @@ class _MatchSetupScreenState extends State<MatchSetupScreen> {
   MatchType _matchType = MatchType.singles;
   MatchFormat _matchFormat = MatchFormat.bestOf3;
 
-  // Team names
-  final _teamAController = TextEditingController(text: "Team A");
-  final _teamBController = TextEditingController(text: "Team B");
+  final _teamAController = TextEditingController();
+  final _teamBController = TextEditingController();
+  final _teamAPlayer1Controller = TextEditingController();
+  final _teamAPlayer2Controller = TextEditingController();
+  final _teamBPlayer1Controller = TextEditingController();
+  final _teamBPlayer2Controller = TextEditingController();
 
-  // Team A players
-  final _teamAPlayer1Controller = TextEditingController(text: "Player 1");
-  final _teamAPlayer2Controller = TextEditingController(text: "Player 2");
-  CourtPosition _teamAPlayer1Position = CourtPosition.right;
-  CourtPosition _teamAPlayer2Position = CourtPosition.left;
+  bool get _canStartMatch {
+    final singlesPlayersValid =
+        _teamAPlayer1Controller.text.trim().isNotEmpty &&
+        _teamBPlayer1Controller.text.trim().isNotEmpty;
+    if (_matchType == MatchType.singles) {
+      return singlesPlayersValid;
+    }
 
-  // Team B players
-  final _teamBPlayer1Controller = TextEditingController(text: "Player 3");
-  final _teamBPlayer2Controller = TextEditingController(text: "Player 4");
-  CourtPosition _teamBPlayer1Position = CourtPosition.right;
-  CourtPosition _teamBPlayer2Position = CourtPosition.left;
+    final doublesPlayersValid =
+        _teamAPlayer2Controller.text.trim().isNotEmpty &&
+        _teamBPlayer2Controller.text.trim().isNotEmpty;
+    return singlesPlayersValid && doublesPlayersValid;
+  }
 
   @override
   void dispose() {
@@ -44,129 +49,202 @@ class _MatchSetupScreenState extends State<MatchSetupScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final surface = Theme.of(context).colorScheme.surface;
+    final fieldBg = dark ? const Color(0xFF1F2937) : const Color(0xFFF8FAFC);
+    final divider = dark ? const Color(0xFF1F2937) : const Color(0xFFE2E8F0);
+    final textMuted = dark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
+
     return Scaffold(
-      backgroundColor: Colors.grey[900],
       appBar: AppBar(
-        title: const Text("Match Setup"),
-        backgroundColor: Colors.blueGrey[900],
-        foregroundColor: Colors.white,
+        centerTitle: true,
+        title: const Text(
+          'Match Setup',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+        ),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Divider(height: 1, color: divider),
+        ),
+        leading: IconButton(
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            }
+          },
+          icon: const Icon(Icons.arrow_back),
+        ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
+      body: SafeArea(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 460),
+            child: Column(
+              children: [
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(16, 20, 16, 120),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _sectionLabel('Match Type', textMuted),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _matchTypeCard(
+                                title: 'Singles',
+                                selected: _matchType == MatchType.singles,
+                                icon: Icons.sports_tennis,
+                                onTap: () {
+                                  setState(
+                                    () => _matchType = MatchType.singles,
+                                  );
+                                },
+                                colorScheme: colorScheme,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _matchTypeCard(
+                                title: 'Doubles',
+                                selected: _matchType == MatchType.doubles,
+                                icon: Icons.groups_2_outlined,
+                                onTap: () {
+                                  setState(
+                                    () => _matchType = MatchType.doubles,
+                                  );
+                                },
+                                colorScheme: colorScheme,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
+                        _sectionLabel('Match Format', textMuted),
+                        const SizedBox(height: 12),
+                        _formatSelector(colorScheme, surface, textMuted),
+                        const SizedBox(height: 24),
+                        _teamConfigurationCard(
+                          title: 'Team A Configuration',
+                          dotColor: const Color(0xFF3B82F6),
+                          teamController: _teamAController,
+                          player1Controller: _teamAPlayer1Controller,
+                          player2Controller: _teamAPlayer2Controller,
+                          fieldBg: fieldBg,
+                          textMuted: textMuted,
+                        ),
+                        const SizedBox(height: 20),
+                        _teamConfigurationCard(
+                          title: 'Team B Configuration',
+                          dotColor: const Color(0xFFEF4444),
+                          teamController: _teamBController,
+                          player1Controller: _teamBPlayer1Controller,
+                          player2Controller: _teamBPlayer2Controller,
+                          fieldBg: fieldBg,
+                          textMuted: textMuted,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                  decoration: BoxDecoration(
+                    color: surface.withValues(alpha: 0.95),
+                    border: Border(top: BorderSide(color: divider)),
+                  ),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.icon(
+                      onPressed: _canStartMatch ? _startMatch : null,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: const Color(0xFF258CF4),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      icon: const Icon(Icons.play_arrow),
+                      label: const Text(
+                        'Start Match',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _sectionLabel(String text, Color mutedColor) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 2),
+      child: Text(
+        text.toUpperCase(),
+        style: TextStyle(
+          fontSize: 12,
+          letterSpacing: 0.7,
+          fontWeight: FontWeight.w700,
+          color: mutedColor,
+        ),
+      ),
+    );
+  }
+
+  Widget _matchTypeCard({
+    required String title,
+    required bool selected,
+    required IconData icon,
+    required VoidCallback onTap,
+    required ColorScheme colorScheme,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOut,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 20),
+        decoration: BoxDecoration(
+          color: colorScheme.surface,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: selected ? const Color(0xFF258CF4) : Colors.transparent,
+            width: 2,
+          ),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x120F172A),
+              blurRadius: 10,
+              offset: Offset(0, 3),
+            ),
+          ],
+        ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Match Type Selection
-            const Text(
-              "Match Type",
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: const Color(0xFF258CF4).withValues(alpha: 0.12),
               ),
+              child: Icon(icon, color: const Color(0xFF258CF4), size: 26),
             ),
             const SizedBox(height: 12),
-            SegmentedButton<MatchType>(
-              segments: const [
-                ButtonSegment(
-                  value: MatchType.singles,
-                  label: Text("Singles"),
-                  icon: Icon(Icons.person),
-                ),
-                ButtonSegment(
-                  value: MatchType.doubles,
-                  label: Text("Doubles"),
-                  icon: Icon(Icons.people),
-                ),
-              ],
-              selected: {_matchType},
-              onSelectionChanged: (Set<MatchType> newSelection) {
-                setState(() {
-                  _matchType = newSelection.first;
-                });
-              },
-            ),
-            const SizedBox(height: 24),
-
-            const Text(
-              "Match Format",
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 12),
-            SegmentedButton<MatchFormat>(
-              segments: const [
-                ButtonSegment(
-                  value: MatchFormat.single,
-                  label: Text("Single"),
-                  icon: Icon(Icons.looks_one),
-                ),
-                ButtonSegment(
-                  value: MatchFormat.bestOf3,
-                  label: Text("Best of 3"),
-                  icon: Icon(Icons.filter_3),
-                ),
-                ButtonSegment(
-                  value: MatchFormat.bestOf5,
-                  label: Text("Best of 5"),
-                  icon: Icon(Icons.filter_5),
-                ),
-              ],
-              selected: {_matchFormat},
-              onSelectionChanged: (Set<MatchFormat> newSelection) {
-                setState(() {
-                  _matchFormat = newSelection.first;
-                });
-              },
-            ),
-            const SizedBox(height: 32),
-
-            // Team A
-            _buildTeamSection(
-              "Team A",
-              _teamAController,
-              _teamAPlayer1Controller,
-              _teamAPlayer2Controller,
-              _teamAPlayer1Position,
-              _teamAPlayer2Position,
-              (pos) => setState(() => _teamAPlayer1Position = pos),
-              (pos) => setState(() => _teamAPlayer2Position = pos),
-              Colors.green[700]!,
-            ),
-            const SizedBox(height: 24),
-
-            // Team B
-            _buildTeamSection(
-              "Team B",
-              _teamBController,
-              _teamBPlayer1Controller,
-              _teamBPlayer2Controller,
-              _teamBPlayer1Position,
-              _teamBPlayer2Position,
-              (pos) => setState(() => _teamBPlayer1Position = pos),
-              (pos) => setState(() => _teamBPlayer2Position = pos),
-              Colors.blue[700]!,
-            ),
-            const SizedBox(height: 32),
-
-            // Start Match Button
-            ElevatedButton(
-              onPressed: _startMatch,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.amber[700],
-                foregroundColor: Colors.black,
-                padding: const EdgeInsets.symmetric(vertical: 20),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: const Text(
-                "Start Match",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
+            Text(
+              title,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
             ),
           ],
         ),
@@ -174,218 +252,280 @@ class _MatchSetupScreenState extends State<MatchSetupScreen> {
     );
   }
 
-  Widget _buildTeamSection(
-    String teamLabel,
-    TextEditingController teamNameController,
-    TextEditingController player1Controller,
-    TextEditingController player2Controller,
-    CourtPosition player1Position,
-    CourtPosition player2Position,
-    Function(CourtPosition) onPlayer1PositionChanged,
-    Function(CourtPosition) onPlayer2PositionChanged,
-    Color color,
-  ) {
+  Widget _formatSelector(ColorScheme colorScheme, Color surface, Color muted) {
     return Container(
-      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        border: Border.all(color: color, width: 2),
+        color: muted.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      padding: const EdgeInsets.all(4),
+      child: Row(
         children: [
-          Text(
-            teamLabel,
-            style: TextStyle(
-              color: color,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
+          _formatOption(
+            title: '1 Set',
+            selected: _matchFormat == MatchFormat.single,
+            onTap: () => setState(() => _matchFormat = MatchFormat.single),
+            surface: surface,
+            accent: colorScheme.primary,
           ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: teamNameController,
-            style: const TextStyle(color: Colors.white),
-            decoration: InputDecoration(
-              labelText: "Team Name",
-              labelStyle: const TextStyle(color: Colors.white70),
-              border: const OutlineInputBorder(),
-              enabledBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: color.withValues(alpha: 0.5)),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: color),
-              ),
-            ),
+          _formatOption(
+            title: 'Best of 3',
+            selected: _matchFormat == MatchFormat.bestOf3,
+            onTap: () => setState(() => _matchFormat = MatchFormat.bestOf3),
+            surface: surface,
+            accent: colorScheme.primary,
           ),
-          if (_matchType == MatchType.doubles) ...[
-            const SizedBox(height: 16),
-            const Text(
-              "Players",
-              style: TextStyle(color: Colors.white70, fontSize: 14),
-            ),
-            const SizedBox(height: 8),
-            _buildPlayerInput(
-              "Player 1",
-              player1Controller,
-              player1Position,
-              onPlayer1PositionChanged,
-              color,
-            ),
-            const SizedBox(height: 12),
-            _buildPlayerInput(
-              "Player 2",
-              player2Controller,
-              player2Position,
-              onPlayer2PositionChanged,
-              color,
-            ),
-          ],
+          _formatOption(
+            title: 'Best of 5',
+            selected: _matchFormat == MatchFormat.bestOf5,
+            onTap: () => setState(() => _matchFormat = MatchFormat.bestOf5),
+            surface: surface,
+            accent: colorScheme.primary,
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildPlayerInput(
-    String label,
-    TextEditingController controller,
-    CourtPosition position,
-    Function(CourtPosition) onPositionChanged,
-    Color color,
-  ) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        // Adjust layout slightly based on available width if needed
-        // Using flex factors 5:3 gives the dropdown more relative space (37.5%)
-        // compared to the previous 2:1 (33%), preventing the overflow.
-        return Row(
-          children: [
-            Expanded(
-              flex: 5,
-              child: TextField(
-                controller: controller,
-                style: const TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  labelText: label,
-                  labelStyle: const TextStyle(color: Colors.white70),
-                  border: const OutlineInputBorder(),
-                  enabledBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: color.withValues(alpha: 0.3)),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: color),
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 12,
-                  ),
-                  isDense: true,
+  Widget _formatOption({
+    required String title,
+    required bool selected,
+    required VoidCallback onTap,
+    required Color surface,
+    required Color accent,
+  }) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOut,
+          margin: const EdgeInsets.symmetric(horizontal: 2),
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: selected ? surface : Colors.transparent,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Text(
+            title,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: selected ? accent : null,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _teamConfigurationCard({
+    required String title,
+    required Color dotColor,
+    required TextEditingController teamController,
+    required TextEditingController player1Controller,
+    required TextEditingController player2Controller,
+    required Color fieldBg,
+    required Color textMuted,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 2),
+          child: Row(
+            children: [
+              Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: dotColor,
+                  borderRadius: BorderRadius.circular(8),
                 ),
               ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              flex: 3,
-              child: DropdownButtonFormField<CourtPosition>(
-                // ignore: deprecated_member_use
-                value: position,
-                dropdownColor: Colors.grey[800],
-                style: const TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  labelText: "Side",
-                  labelStyle: const TextStyle(color: Colors.white70),
-                  border: const OutlineInputBorder(),
-                  enabledBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: color.withValues(alpha: 0.3)),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: color),
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 12,
-                  ),
-                  isDense: true,
+              const SizedBox(width: 8),
+              Text(
+                title.toUpperCase(),
+                style: TextStyle(
+                  fontSize: 12,
+                  letterSpacing: 0.7,
+                  fontWeight: FontWeight.w700,
+                  color: textMuted,
                 ),
-                items: const [
-                  DropdownMenuItem(
-                    value: CourtPosition.left,
-                    child: Text("Left"),
-                  ),
-                  DropdownMenuItem(
-                    value: CourtPosition.right,
-                    child: Text("Right"),
-                  ),
-                ],
-                onChanged: (value) {
-                  if (value != null) {
-                    onPositionChanged(value);
-                  }
-                },
-                isExpanded: true,
               ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 10),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFF334155)
+                  : const Color(0xFFE2E8F0),
             ),
-          ],
-        );
-      },
+            color: Theme.of(context).colorScheme.surface,
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x0D000000),
+                blurRadius: 12,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _fieldLabel('Team Name (Optional)', textMuted),
+              const SizedBox(height: 6),
+              _textField(
+                controller: teamController,
+                hint: title.startsWith('Team A')
+                    ? 'e.g. Smash Kings'
+                    : 'e.g. Shuttle Warriors',
+                icon: Icons.shield_outlined,
+                fieldBg: fieldBg,
+              ),
+              const SizedBox(height: 12),
+              _fieldLabel('Players', textMuted),
+              const SizedBox(height: 6),
+              _textField(
+                controller: player1Controller,
+                hint: 'Player 1 Name',
+                icon: Icons.person_outline,
+                fieldBg: fieldBg,
+              ),
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 180),
+                switchInCurve: Curves.easeOut,
+                switchOutCurve: Curves.easeIn,
+                child: _matchType == MatchType.doubles
+                    ? Padding(
+                        key: const ValueKey('doubles-2nd-player'),
+                        padding: const EdgeInsets.only(top: 10),
+                        child: _textField(
+                          controller: player2Controller,
+                          hint: 'Player 2 Name',
+                          icon: Icons.person_outline,
+                          fieldBg: fieldBg,
+                        ),
+                      )
+                    : const SizedBox.shrink(
+                        key: ValueKey('singles-no-2nd-player'),
+                      ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _fieldLabel(String text, Color mutedColor) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 2),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
+          color: mutedColor,
+        ),
+      ),
+    );
+  }
+
+  Widget _textField({
+    required TextEditingController controller,
+    required String hint,
+    required IconData icon,
+    required Color fieldBg,
+  }) {
+    return TextField(
+      controller: controller,
+      onChanged: (_) => setState(() {}),
+      decoration: InputDecoration(
+        hintText: hint,
+        prefixIcon: Icon(icon, size: 20),
+        filled: true,
+        fillColor: fieldBg,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 14,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(
+            color: const Color(0xFF258CF4).withValues(alpha: 0.35),
+            width: 1.3,
+          ),
+        ),
+      ),
     );
   }
 
   void _startMatch() {
     final matchProvider = context.read<MatchProvider>();
 
-    // Create team players based on match type
-    TeamPlayers teamAPlayers;
-    TeamPlayers teamBPlayers;
+    final teamAName = _teamAController.text.trim().isEmpty
+        ? 'Team A'
+        : _teamAController.text.trim();
+    final teamBName = _teamBController.text.trim().isEmpty
+        ? 'Team B'
+        : _teamBController.text.trim();
 
-    if (_matchType == MatchType.singles) {
-      teamAPlayers = TeamPlayers(
-        player1: Player(
-          name: _teamAPlayer1Controller.text.trim(),
-          startingPosition: CourtPosition.right,
-        ),
-      );
-      teamBPlayers = TeamPlayers(
-        player1: Player(
-          name: _teamBPlayer1Controller.text.trim(),
-          startingPosition: CourtPosition.right,
-        ),
-      );
-    } else {
-      teamAPlayers = TeamPlayers(
-        player1: Player(
-          name: _teamAPlayer1Controller.text.trim(),
-          startingPosition: _teamAPlayer1Position,
-        ),
-        player2: Player(
-          name: _teamAPlayer2Controller.text.trim(),
-          startingPosition: _teamAPlayer2Position,
-        ),
-      );
-      teamBPlayers = TeamPlayers(
-        player1: Player(
-          name: _teamBPlayer1Controller.text.trim(),
-          startingPosition: _teamBPlayer1Position,
-        ),
-        player2: Player(
-          name: _teamBPlayer2Controller.text.trim(),
-          startingPosition: _teamBPlayer2Position,
-        ),
-      );
-    }
+    final teamAPlayers = _matchType == MatchType.singles
+        ? TeamPlayers(
+            player1: Player(
+              name: _teamAPlayer1Controller.text.trim(),
+              startingPosition: CourtPosition.right,
+            ),
+          )
+        : TeamPlayers(
+            player1: Player(
+              name: _teamAPlayer1Controller.text.trim(),
+              startingPosition: CourtPosition.right,
+            ),
+            player2: Player(
+              name: _teamAPlayer2Controller.text.trim(),
+              startingPosition: CourtPosition.left,
+            ),
+          );
 
-    // Initialize match with setup data
+    final teamBPlayers = _matchType == MatchType.singles
+        ? TeamPlayers(
+            player1: Player(
+              name: _teamBPlayer1Controller.text.trim(),
+              startingPosition: CourtPosition.right,
+            ),
+          )
+        : TeamPlayers(
+            player1: Player(
+              name: _teamBPlayer1Controller.text.trim(),
+              startingPosition: CourtPosition.right,
+            ),
+            player2: Player(
+              name: _teamBPlayer2Controller.text.trim(),
+              startingPosition: CourtPosition.left,
+            ),
+          );
+
     matchProvider.initializeMatch(
-      teamAName: _teamAController.text.trim(),
-      teamBName: _teamBController.text.trim(),
+      teamAName: teamAName,
+      teamBName: teamBName,
       matchType: _matchType,
       matchFormat: _matchFormat,
       teamAPlayers: teamAPlayers,
       teamBPlayers: teamBPlayers,
     );
 
-    // Navigate to match screen
     context.go('/match');
   }
 }
